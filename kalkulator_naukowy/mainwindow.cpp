@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <string.h>
+#include <windows.h>
+#include <QMessageBox>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -300,8 +302,8 @@ void MainWindow::on_P_rowna_sie_clicked()
 {
     if(!(isLeft)) return;
     Right = ui->EScreen->text().toDouble();
-    double tmp = 0, zapis;      //Inicjalizacja zminnych użytych w funkcjach
-    double mnoznik = 1.0;
+    double tmp = 0;      //Inicjalizacja zminnych użytych w funkcjach
+    QString tmp2, wynik, brak = "Brak";
 
 switch (Oper) {
     case Plus:          //Dodawanie
@@ -350,31 +352,51 @@ switch (Oper) {
          tmp = tan(Left*Pi/180);
          break;
 
-    case Binarny:       //Przeliczanie z systemu dziesiątkowego na binarny  - nie dziala
-        /*int intZap, intLeft;
-        do {
-            intLeft = Left;
-            intZap = intLeft % 2;
-
-        } while(Left > 0);*/
+    case Binarny:       //Przeliczanie z systemu dziesiątkowego na binarny
+        double calkowita, ulamkowa;
+        ulamkowa = modf(Left, &calkowita);  //Rozbicie na część całkowitą i ułamkową
+        if (ulamkowa != 0){
+            QMessageBox::information(this,"Uwaga","Czesc ulamkowa zostanie pominieta");
+        }
+        while (calkowita != 0){
+            if (int(calkowita) % 2 != 0) {
+                tmp2 = "1";
+            }
+            else {
+                tmp2 = "0";
+            }
+            calkowita /= 2;
+            wynik = tmp2 + wynik;
+            ulamkowa = modf(calkowita, &calkowita);
+            }
         break;
 
-    case Dziesietny:    //Przeliczanie z systemu binarnego na dziesietny    - nie dziala
-        QString Liczba, Znak;
-        double Znak2;
-        Liczba = Left;
-        for (int i = 0; i != Liczba.size(); i++){
-            Znak = Liczba[Liczba.size() - i];
-            Znak2 = Znak.toDouble();
-            zapis = pow(2.0, i) * Znak2;
-            tmp += zapis;
+    case Dziesietny:    //Przeliczanie z systemu binarnego na dziesietny
+        QString wynik, tmp2;
+        wynik = ui->EScreen->text();
+        for (int i = 0; i < wynik.size(); ++i){
+            tmp2 = wynik[wynik.size() - 1 - i];
+            if (tmp2 != "1" && tmp2 != "0"){
+                QMessageBox::information(this,"Uwaga!", "Liczba nie ma zapisu binarnego");
+                tmp = 0;
+                break;
+            }
+            if (tmp2 == "1"){
+                tmp += pow(2.0, i) * 1.0;
+            } else {
+                tmp += pow(2.0, i) * 0.0;
+            }
         }
         break;
 }
 
 //Wyświetlanie wyniku i przywracanie do wartości początkowych
 ScreenClear = true;
-ui->EScreen->setText(QString::number(tmp));
+if (Oper == Binarny){               //Warunek wyświetlania QStringa lub double
+    ui->EScreen->setText(wynik);
+} else {
+    ui->EScreen->setText(QString::number(tmp));
+}
 Left = 0;
 Right = 0;
 isRight = false;
